@@ -1,0 +1,36 @@
+- name: create ec2 and r53
+  hosts: local
+  connection: local
+  vars:
+    ami_id: ami-09c813fb71547fc4f
+    sg_id: sg-07e0e88e98e26af12 # replace with your SG ID
+    zone_id: "Z05714843SO1YQWMF1N5N" # replace with your ID
+    domain_name: "pramod.shop"
+    instances: 
+     -mongodb
+    tasks:
+    - name: create ec2 instances
+      amazon.aws.ec2_instance:
+       name: "{{ item }}"
+       instance_type: t3.micro
+       security_group: "{{ sg_id }}"
+       image_id: "{{ ami_id }}"
+       tags:
+         Name: "{{ item }}"
+       loop: "{{ instances }}"
+       regsiter: ec2_output
+
+    - name: print the ec2_output
+      ansible.buitlin.debug:
+       msg: "{{ ec2_output }}"
+
+    - name: create route53 record
+      amazon.aws.route53:
+       state: present
+       zone: "{{ domain_name }}"
+       record: "{{ item.item }}.{{ domain_name }}"
+       type: A
+       ttl: 1
+       value: "{{ item.instances[0].private_ip_address }}"
+       overwrite: true
+      loop: "{{ ec2_output.results }}"  
