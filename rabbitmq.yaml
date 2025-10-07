@@ -15,7 +15,7 @@
   - name: start and enable rabbitmq server
     ansible.builtin.service:
       name: rabbitmq-server
-      start: started
+      state: started
       enabled: yes
 
   - name: create and provide permissions to user
